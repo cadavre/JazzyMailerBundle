@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="jazzy_mailer.templating" class="%twig.class%" public="false" >
+            <argument type="service" id="lexik_mailer.templating.loader" />
+            <argument>%twig.options%</argument>
+            <call method="addExtension">
+                <argument type="service" id="twig.extension.routing" />
+            </call>
+        </service>
+        
+        <service id="jazzy_mailer.message_renderer" class="%lexik_mailer.message_renderer.class%">
+            <argument type="service" id="jazzy_mailer.templating" />
+        </service>
+
+        <!-- Factory -->
+        <service id="jazzy_mailer.message_factory" class="%lexik_mailer.message_factory.class%">
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="jazzy_mailer.message_renderer" />
+            <argument type="service" id="lexik_mailer.annotation_driver" />
+            <argument type="service" id="swiftmailer.transport.eventdispatcher" />
+            <argument>%lexik_mailer.default_options%</argument>
+        </service>
+    </services>
+
+</container>
