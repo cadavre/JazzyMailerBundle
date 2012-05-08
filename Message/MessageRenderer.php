@@ -3,6 +3,7 @@
 namespace Jazzy\MailerBundle\Message;
 
 use Lexik\Bundle\MailerBundle\Model\EmailInterface;
+use Lexik\Bundle\MailerBundle\Entity\Layout;
 
 /**
  * Render each parts of an email.
@@ -43,10 +44,30 @@ class MessageRenderer {
     $this->templating->getLoader()->setTemplate('subject', $email->getSubject());
     $this->templating->getLoader()->setTemplate('from_name', $email->getFromName());
 
-    $layout = $email->getLayoutBody();
-    $this->templating->getLoader()->setTemplate('layout', $layout);
+    $locale = $email->getLocale();
+    
+    /*
+     * Przenieść do rekurencyjnej funkcji, która pobiera wszystkie kolejne layouty, wsadza je z przypisaniem do kluczy w tablicy,
+     * która zawiera nazwy layoutów.
+     * Potem tą tablicę foreachem przejechać, dodając setTemplate()...
+     */
+    
+    $layoutBody = $email->getLayoutBody(); // email content
+    $this->templating->getLoader()->setTemplate('layout', $layoutBody);
+    echo "added layout reference\n";
 
-    $content = empty($layout) ? $email->getBody() : '{% extends \'layout\' %}' . $email->getBody() . '';
+    $layout = $email->getLayout(); // email defined layout (first)
+    $parent = $layout->getParent(); // email first layout parent
+
+    if ($parent instanceof Layout) { // check if have parent template...
+      $parent->setLocale($locale);
+      //$parent->getReference();
+      //$parent->getBody();
+      echo "added " . $parent->getReference() . " reference\n";
+      $this->templating->getLoader()->setTemplate($parent->getReference(), $parent->getBody());
+    }
+
+    $content = empty($layoutBody) ? $email->getBody() : '{% extends \'layout\' %}' . $email->getBody() . '';
     $this->templating->getLoader()->setTemplate('content', $content);
   }
 

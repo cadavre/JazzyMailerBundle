@@ -1,0 +1,3 @@
+jazzy_mailer:
+    layout:
+        parent:                   "Parent"
