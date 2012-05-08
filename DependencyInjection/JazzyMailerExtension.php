@@ -12,20 +12,20 @@ use Symfony\Component\DependencyInjection\Loader;
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
  */
-class JazzyMailerExtension extends Extension
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @param array            $configs   Bundle config
-     * @param ContainerBuilder $container Bundle Container Builder
-     */
-    public function load(array $configs, ContainerBuilder $container)
-    {
-        $configuration = new Configuration();
-        $this->processConfiguration($configuration, $configs);
+class JazzyMailerExtension extends Extension {
 
-        $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.xml');
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @param array            $configs   Bundle config
+   * @param ContainerBuilder $container Bundle Container Builder
+   */
+  public function load(array $configs, ContainerBuilder $container) {
+    $configuration = new Configuration();
+    $this->processConfiguration($configuration, $configs);
+
+    $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+    $loader->load('services.xml');
+  }
+
 }
