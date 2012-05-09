@@ -69,9 +69,9 @@ class JzEmail implements EmailInterface
     protected $translations;
 
     /**
-     * @var Lexik\Bundle\MailerBundle\Entity\Layout
+     * @var Jazzy\MailerBundle\Entity\JzLayout
      *
-     * @ORM\ManyToOne(targetEntity="Lexik\Bundle\MailerBundle\Entity\Layout")
+     * @ORM\ManyToOne(targetEntity="Jazzy\MailerBundle\Entity\JzLayout")
      */
     protected $layout;
 
@@ -201,7 +201,7 @@ class JzEmail implements EmailInterface
     /**
      * Set layout
      *
-     * @param Layout $layout
+     * @param JzLayout $layout
      */
     public function setLayout($layout)
     {
@@ -211,7 +211,7 @@ class JzEmail implements EmailInterface
     /**
      * Get layout
      *
-     * @return Layout
+     * @return JzLayout
      */
     public function getLayout()
     {
@@ -325,7 +325,7 @@ class JzEmail implements EmailInterface
     {
         $body = '';
 
-        if ($this->layout instanceof Layout) {
+        if ($this->layout instanceof JzLayout) {
             $this->layout->setLocale($this->locale);
 
             $body = $this->layout->getBody();

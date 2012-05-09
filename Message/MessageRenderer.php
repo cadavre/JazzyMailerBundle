@@ -41,34 +41,40 @@ class MessageRenderer {
    * @param EmailInterface $email
    */
   public function loadTemplates(EmailInterface $email) {
+    $layoutsArray = array();
+    $content = "";
+
     $this->templating->getLoader()->setTemplate('subject', $email->getSubject());
     $this->templating->getLoader()->setTemplate('from_name', $email->getFromName());
 
     $locale = $email->getLocale();
-    
-    /*
-     * Przenieść do rekurencyjnej funkcji, która pobiera wszystkie kolejne layouty, wsadza je z przypisaniem do kluczy w tablicy,
-     * która zawiera nazwy layoutów.
-     * Potem tą tablicę foreachem przejechać, dodając setTemplate()...
-     */
-    
-    $layoutBody = $email->getLayoutBody(); // email content
-    $this->templating->getLoader()->setTemplate('layout', $layoutBody);
-    echo "added layout reference\n";
 
-    $layout = $email->getLayout(); // email defined layout (first)
-    $parent = $layout->getParent(); // email first layout parent
+    $startLayout = $email->getLayout();
+    $layoutsArray = array_reverse($this->getLayout($startLayout, $locale, $layoutsArray));
+    $layoutsCount = count($layoutsArray);
 
-    if ($parent instanceof Layout) { // check if have parent template...
-      $parent->setLocale($locale);
-      //$parent->getReference();
-      //$parent->getBody();
-      echo "added " . $parent->getReference() . " reference\n";
-      $this->templating->getLoader()->setTemplate($parent->getReference(), $parent->getBody());
+    for ($i = 0; $i < $layoutsCount; $i++) {
+      $layoutBody = ($i == 0) ? $layoutsArray[$i]['body'] : "{% extends '" . $layoutsArray[$i - 1]['reference'] . "' %}" . $layoutsArray[$i]['body'] ;
+      $this->templating->getLoader()->setTemplate($layoutsArray[$i]['reference'], $layoutBody);
+    }
+    $content = ($layoutsCount != 0) ? "{% extends '" . $layoutsArray[$layoutsCount - 1]['reference'] . "' %}" . $email->getBody() : $email->getBody() ;
+
+    $this->templating->getLoader()->setTemplate('content', $content);
+  }
+
+  private function getLayout($layout, $locale, $layoutsArray) {
+    $layout->setLocale($locale);
+
+    $reference = $layout->getReference();
+    $body = $layout->getBody();
+    $layoutsArray[] = array('reference' => $reference, 'body' => $body);
+
+    $parent = $layout->getParent();
+    if ($parent instanceof Layout) {
+      $layoutsArray = $this->getLayout($parent, $locale, $layoutsArray);
     }
 
-    $content = empty($layoutBody) ? $email->getBody() : '{% extends \'layout\' %}' . $email->getBody() . '';
-    $this->templating->getLoader()->setTemplate('content', $content);
+    return $layoutsArray;
   }
 
   /**
