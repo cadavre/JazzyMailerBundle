@@ -66,7 +66,7 @@ class MessageFactory {
     $this->swiftDispatcher = $swiftDispatcher;
     $this->options = array_merge($this->getDefaultOptions(), $defaultOptions);
 
-    $this->emailRepository = $this->em->getRepository($this->options['email_class']);
+    $this->emailRepository = $this->em->getRepository('JazzyMailerBundle:JzEmail');
   }
 
   /**

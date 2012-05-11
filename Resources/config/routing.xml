@@ -6,20 +6,20 @@
 
     <!-- Email -->
     <route id="lexik_mailer.email_list" pattern="/email/list">
-        <default key="_controller">LexikMailerBundle:Email:list</default>
+        <default key="_controller">JazzyMailerBundle:JzEmail:list</default>
     </route>
     <route id="lexik_mailer.email_new" pattern="/email/new">
-        <default key="_controller">LexikMailerBundle:Email:new</default>
+        <default key="_controller">JazzyMailerBundle:JzEmail:new</default>
     </route>
     <route id="lexik_mailer.email_edit" pattern="/email/edit/{emailId}/{lang}">
-        <default key="_controller">LexikMailerBundle:Email:edit</default>
+        <default key="_controller">JazzyMailerBundle:JzEmail:edit</default>
         <default key="lang" />
     </route>
     <route id="lexik_mailer.email_delete" pattern="/email/delete/{emailId}">
-        <default key="_controller">LexikMailerBundle:Email:delete</default>
+        <default key="_controller">JazzyMailerBundle:JzEmail:delete</default>
     </route>
     <route id="lexik_mailer.email_preview" pattern="/email/preview/{emailId}/{lang}">
-        <default key="_controller">LexikMailerBundle:Email:preview</default>
+        <default key="_controller">JazzyMailerBundle:JzEmail:preview</default>
     </route>
 
     <!-- Email Translation -->
