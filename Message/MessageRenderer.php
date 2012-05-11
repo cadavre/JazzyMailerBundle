@@ -59,7 +59,7 @@ class MessageRenderer {
     }
     $content = ($layoutsCount != 0) ? "{% extends '" . $layoutsArray[$layoutsCount - 1]['reference'] . "' %}" . $email->getBody() : $email->getBody() ;
 
-    $this->templating->getLoader()->setTemplate('content', $content);
+    $this->templating->getLoader()->setTemplate('render_content', $content);
   }
 
   private function getLayout($layout, $locale, $layoutsArray) {

@@ -26,6 +26,13 @@ class JzLayout extends Layout
      * @ORM\ManyToOne(targetEntity="Jazzy\MailerBundle\Entity\JzLayout")
      */
     protected $parent;
+    
+    /**
+     * @var string
+     *
+     * @ORM\Column(type="text", nullable=true)
+     */
+    protected $arguments;
 
     /**
      * Get parent
@@ -45,6 +52,26 @@ class JzLayout extends Layout
     public function setParent($parent)
     {
         $this->parent = $parent;
+    }
+
+    /**
+     * Get arguments
+     *
+     * @return string
+     */
+    public function getArguments()
+    {
+        return $this->arguments;
+    }
+
+    /**
+     * Set arguments
+     *
+     * @param string $arguments
+     */
+    public function setArguments($arguments)
+    {
+        $this->arguments = $arguments;
     }
 
 }

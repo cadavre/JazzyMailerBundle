@@ -128,6 +128,8 @@ class MessageFactory {
     }
 
     try {
+      $this->verifyLayoutArguments($email->getLayout()->getArguments(), $parameters);
+
       $email->setLocale($locale);
       $this->renderer->loadTemplates($email);
 
@@ -135,7 +137,7 @@ class MessageFactory {
               ->setSubject($this->renderTemplate('subject', $parameters, $email->getReference()))
               ->setFrom($email->getFromAddress($this->options['admin_email']), $this->renderTemplate('from_name', $parameters, $email->getReference()))
               ->setTo($to)
-              ->setBody($this->renderTemplate('content', $parameters, $email->getReference()), 'text/html');
+              ->setBody($this->renderTemplate('render_content', $parameters, $email->getReference()), 'text/html');
 
       foreach ($email->getBccs() as $bcc) {
         $swiftEmail->addBcc($bcc);
@@ -152,6 +154,33 @@ class MessageFactory {
 
       return $message->setFrom($this->options['admin_email'])
                       ->setTo($this->options['admin_email']);
+    }
+  }
+
+  /**
+   * Verifies parameters given in parameters of message.
+   * 
+   * @author Seweryn Zeman <seweryn.zeman@jazzy.pro>
+   */
+  private function verifyLayoutArguments($arguments, $parameters) {
+    // arguments from Layout parsed to Array(type, name, type, name...)
+    $args = preg_split('/[\s,\$]+/', $arguments, -1, PREG_SPLIT_NO_EMPTY);
+    $params = array_keys($parameters);
+    $paramsCount = count($params);
+
+    if ((count($args) % 2 != 0) || (count($args) / 2 != $paramsCount)) {
+      throw new \InvalidArgumentException("Number of arguments (" . count($args) / 2 . ") does not match the number of given parameters (" . $paramsCount . ")!");
+    }
+
+    for ($i = 0; $i < $paramsCount; $i++) {
+      $index = array_search($params[$i], $args);
+      if (empty($index)) {
+        throw new \InvalidArgumentException("Parameter name '" . $params[$i] . "' does not match any desired argument!");
+      } else {
+        if (!is_a($parameters[$params[$i]], $args[$index - 1])) {
+          throw new \InvalidArgumentException("Invalid parameter '" . $params[$i] . "' type! Should be '" . $args[$index - 1] . "'!");
+        }
+      }
     }
   }
 

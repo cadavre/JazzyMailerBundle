@@ -25,6 +25,7 @@ class JzLayoutType extends LayoutType {
                 'empty_value' => '',
                 'class' => 'Jazzy\MailerBundle\Entity\JzLayout',
             ))
+            ->add('arguments')
             ->add('translation', new LayoutTranslationType(), array(
                 'property_path' => false,
                 'data' => $options['data_translation'],

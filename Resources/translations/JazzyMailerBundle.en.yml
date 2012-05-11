@@ -1,3 +1,4 @@
 jazzy_mailer:
     layout:
         parent:                   "Parent"
+        arguments:                "Arguments"
