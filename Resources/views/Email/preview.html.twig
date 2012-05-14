@@ -1,0 +1,35 @@
+{% if errors['subject'] is not none %}
+<div style="border: 1px solid #f00; background: #FFE1E1">
+    <div style="font-weight: bolder; color: #f00; padding: 10px; text-align: center; ">
+        {{ errors['subject'] }}
+    </div>
+</div>
+{% endif %}
+
+<div><u>{{ 'lexik_mailer.preview.subject'|trans({}, 'LexikMailerBundle') }}:</u></div>
+{{ subject|raw }}
+
+<hr />
+
+{% if errors['from_name'] is not none %}
+<div style="border: 1px solid #f00; background: #FFE1E1">
+    <div style="font-weight: bolder; color: #f00; padding: 10px; text-align: center; ">
+        {{ errors['from_name'] }}
+    </div>
+</div>
+{% endif %}
+
+<div><u>{{ 'lexik_mailer.preview.from_name'|trans({}, 'LexikMailerBundle') }}:</u></div>
+{{ fromName|raw }}
+
+<hr />
+
+{% if errors['render_content'] is not none %}
+<div style="border: 1px solid #f00; background: #FFE1E1">
+    <div style="font-weight: bolder; color: #f00; padding: 10px; text-align: center; ">
+        {{ errors['render_content'] }}
+    </div>
+</div>
+{% endif %}
+<br />
+{{ render_content|raw }}

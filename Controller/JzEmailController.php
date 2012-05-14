@@ -3,11 +3,9 @@
 namespace Jazzy\MailerBundle\Controller;
 
 use Jazzy\MailerBundle\Entity\JzEmail;
-
 use Lexik\Bundle\MailerBundle\Controller\EmailController;
 use Lexik\Bundle\MailerBundle\Entity\EmailTranslation;
 use Lexik\Bundle\MailerBundle\Form\EmailType;
-
 use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,204 +18,199 @@ use Symfony\Component\Locale\Locale;
  * @author Laurent Heurtault <l.heurtault@lexik.fr>
  * @author Yoann Aparici <y.aparici@lexik.fr>
  */
-class JzEmailController extends EmailController
-{
-    /**
-     * List all emails
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function listAction()
-    {
-        $em = $this->container->get('doctrine.orm.entity_manager');
-        $emails = $em->getRepository('JazzyMailerBundle:JzEmail')->findAll();
+class JzEmailController extends EmailController {
 
-        return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:list.html.twig', array(
-            'emails' => $emails,
-            'layout' => $this->container->getParameter('lexik_mailer.base_layout'),
-            'locale' => $this->container->getParameter('locale'),
-        ));
+  /**
+   * List all emails
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   */
+  public function listAction() {
+    $em = $this->container->get('doctrine.orm.entity_manager');
+    $emails = $em->getRepository('JazzyMailerBundle:JzEmail')->findAll();
+
+    return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:list.html.twig', array(
+                'emails' => $emails,
+                'layout' => $this->container->getParameter('lexik_mailer.base_layout'),
+                'locale' => $this->container->getParameter('locale'),
+            ));
+  }
+
+  /**
+   * Email edition
+   *
+   * @param string $emailId
+   * @param string $lang
+   * @return \Symfony\Component\HttpFoundation\Response
+   */
+  public function editAction($emailId, $lang = null) {
+    $em = $this->container->get('doctrine.orm.entity_manager');
+    $request = $this->container->get('request');
+    $lang = $lang ? : $this->container->getParameter('locale');
+
+    $email = $em->find('JazzyMailerBundle:JzEmail', $emailId);
+    $translation = $email->getTranslation($lang);
+
+    if (!$email) {
+      throw new NotFoundHttpException('Email not found');
     }
 
-    /**
-     * Email edition
-     *
-     * @param string $emailId
-     * @param string $lang
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function editAction($emailId, $lang = null)
-    {
+    $form = $this->container->get('form.factory')->create(new EmailType(), $email, array(
+        'data_translation' => $translation,
+        'edit' => true,
+            ));
+
+    // Submit form
+    if ('POST' === $request->getMethod()) {
+      $form->bindRequest($request);
+      if ($form->isValid()) {
         $em = $this->container->get('doctrine.orm.entity_manager');
-        $request = $this->container->get('request');
-        $lang = $lang ? : $this->container->getParameter('locale');
+        $em->persist($translation);
+        $em->flush();
 
-        $email = $em->find('JazzyMailerBundle:JzEmail', $emailId);
-        $translation = $email->getTranslation($lang);
-
-        if (!$email) {
-            throw new NotFoundHttpException('Email not found');
-        }
-
-        $form = $this->container->get('form.factory')->create(new EmailType(), $email, array(
-                    'data_translation'      => $translation,
-                    'edit'                  => true,
-                ));
-
-        // Submit form
-        if ('POST' === $request->getMethod()) {
-            $form->bindRequest($request);
-            if ($form->isValid()) {
-                $em = $this->container->get('doctrine.orm.entity_manager');
-                $em->persist($translation);
-                $em->flush();
-
-                return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_edit', array(
-                            'emailId'   => $email->getId(),
-                            'lang'      => $lang,
+        return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_edit', array(
+                            'emailId' => $email->getId(),
+                            'lang' => $lang,
                         )));
-            }
-        }
-
-        return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:edit.html.twig', array(
-            'form'          => $form->createView(),
-            'layout'        => $this->container->getParameter('lexik_mailer.base_layout'),
-            'email'         => $email,
-            'lang'          => $lang,
-            'displayLang'   => Locale::getDisplayLanguage($lang),
-            'routePattern'  => urldecode($this->container->get('router')->generate('lexik_mailer.email_edit', array('emailId' => $email->getId(), 'lang' => '%lang%'), true)),
-        ));
+      }
     }
 
-    /**
-     * Delete email
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function deleteAction($emailId)
-    {
+    return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:edit.html.twig', array(
+                'form' => $form->createView(),
+                'layout' => $this->container->getParameter('lexik_mailer.base_layout'),
+                'email' => $email,
+                'lang' => $lang,
+                'displayLang' => Locale::getDisplayLanguage($lang),
+                'routePattern' => urldecode($this->container->get('router')->generate('lexik_mailer.email_edit', array('emailId' => $email->getId(), 'lang' => '%lang%'), true)),
+            ));
+  }
+
+  /**
+   * Delete email
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   */
+  public function deleteAction($emailId) {
+    $em = $this->container->get('doctrine.orm.entity_manager');
+    $email = $em->find('JazzyMailerBundle:JzEmail', $emailId);
+
+    if (!$email) {
+      throw new NotFoundHttpException('Email not found');
+    }
+
+    $email->getTranslations()->forAll(function($key, $translation) use ($em) {
+              $em->remove($translation);
+            });
+
+    $em->remove($email);
+    $em->flush();
+
+    return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_list'));
+  }
+
+  /**
+   * New email
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   */
+  public function newAction() {
+    $request = $this->container->get('request');
+    $email = new JzEmail();
+    $translation = new EmailTranslation($this->container->getParameter('locale'));
+
+    $translation->setEmail($email);
+    $form = $this->container->get('form.factory')->create(new EmailType(), $email, array(
+        'data_translation' => $translation,
+            ));
+    // Submit form
+    if ('POST' === $request->getMethod()) {
+      $form->bindRequest($request);
+
+      if ($form->isValid()) {
         $em = $this->container->get('doctrine.orm.entity_manager');
-        $email = $em->find('JazzyMailerBundle:JzEmail', $emailId);
-
-        if (!$email) {
-            throw new NotFoundHttpException('Email not found');
-        }
-
-        $email->getTranslations()->forAll(function($key, $translation) use ($em) {
-            $em->remove($translation);
-        });
-
-        $em->remove($email);
+        $em->persist($translation);
+        $em->persist($email);
         $em->flush();
 
-        return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_list'));
+        return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_new'));
+      }
     }
 
-    /**
-     * New email
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    public function newAction()
-    {
-        $request = $this->container->get('request');
-        $email = new JzEmail();
-        $translation = new EmailTranslation($this->container->getParameter('locale'));
+    return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:new.html.twig', array(
+                'form' => $form->createView(),
+                'layout' => $this->container->getParameter('lexik_mailer.base_layout'),
+                'lang' => Locale::getDisplayLanguage($translation->getLang()),
+            ));
+  }
 
-        $translation->setEmail($email);
-        $form = $this->container->get('form.factory')->create(new EmailType(), $email, array(
-                    'data_translation' => $translation,
-                ));
-        // Submit form
-        if ('POST' === $request->getMethod()) {
-            $form->bindRequest($request);
+  /**
+   * Preview an email
+   *
+   * @param int $emailId
+   */
+  public function previewAction($emailId, $lang) {
+    $em = $this->container->get('doctrine.orm.entity_manager');
 
-            if ($form->isValid()) {
-                $em = $this->container->get('doctrine.orm.entity_manager');
-                $em->persist($translation);
-                $em->persist($email);
-                $em->flush();
+    $class = $this->container->getParameter('lexik_mailer.email_entity.class');
+    $email = $em->find($class, $emailId);
 
-                return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_new'));
-            }
-        }
-
-        return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:new.html.twig', array(
-            'form'      => $form->createView(),
-            'layout'    => $this->container->getParameter('lexik_mailer.base_layout'),
-            'lang'      => Locale::getDisplayLanguage($translation->getLang()),
-        ));
+    if (!$email) {
+      throw new NotFoundHttpException('Email not found');
     }
 
-    /**
-     * Preview an email
-     *
-     * @param int $emailId
-     */
-    public function previewAction($emailId, $lang)
-    {
-        $em = $this->container->get('doctrine.orm.entity_manager');
+    $email->setLocale($lang);
 
-        $class = $this->container->getParameter('lexik_mailer.email_entity.class');
-        $email = $em->find($class, $emailId);
+    $renderer = $this->container->get('lexik_mailer.message_renderer');
+    $renderer->loadTemplates($email);
+    $renderer->setStrictVariables(false);
 
-        if (!$email) {
-            throw new NotFoundHttpException('Email not found');
-        }
+    $subject = $email->getSubject();
+    $fromName = $email->getFromName($this->container->getParameter('lexik_mailer.admin_email'));
+    $renderContent = $renderer->renderTemplate('render_content', array(), $email->getReference());
 
-        $email->setLocale($lang);
+    $errors = array(
+        'subject' => null,
+        'from_name' => null,
+        'render_content' => null,
+    );
 
-        $renderer = $this->container->get('lexik_mailer.message_renderer');
-        $renderer->loadTemplates($email);
-        $renderer->setStrictVariables(false);
-
-        $subject = $email->getSubject();
-        $fromName = $email->getFromName($this->container->getParameter('lexik_mailer.admin_email'));
-        $body = $email->getBody();
-
-        $errors = array(
-            'subject' => null,
-            'from_name' => null,
-            'content' => null,
-        );
-
-        foreach ($errors as $template => $error) {
-            try {
-                $renderer->renderTemplate($template);
-            } catch(\Twig_Error $e) {
-                $errors[$template] = $e->getRawMessage();
-            }
-        }
-
-        $renderer->setStrictVariables(true);
-
-        return $this->container->get('templating')->renderResponse('LexikMailerBundle:Email:preview.html.twig', array(
-            'body'     => $body,
-            'subject'  => $subject,
-            'fromName' => $fromName,
-            'errors'   => $errors,
-        ));
+    foreach ($errors as $template => $error) {
+      try {
+        $renderer->renderTemplate($template);
+      } catch (\Twig_Error $e) {
+        $errors[$template] = $e->getRawMessage();
+      }
     }
 
-    /**
-     * Delete a translation
-     *
-     * @param string $translationId
-     * @throws NotFoundHttpException
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
-     */
-    public function deleteTranslationAction($translationId)
-    {
-        $em = $this->container->get('doctrine.orm.entity_manager');
-        $translation = $em->find('LexikMailerBundle:EmailTranslation', $translationId);
+    $renderer->setStrictVariables(true);
 
-        if (!$translation) {
-            throw new NotFoundHttpException('Translation not found');
-        }
+    return $this->container->get('templating')->renderResponse('JazzyMailerBundle:Email:preview.html.twig', array(
+                'render_content' => $renderContent,
+                'subject' => $subject,
+                'fromName' => $fromName,
+                'errors' => $errors,
+            ));
+  }
 
-        $em->remove($translation);
-        $em->flush();
+  /**
+   * Delete a translation
+   *
+   * @param string $translationId
+   * @throws NotFoundHttpException
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   */
+  public function deleteTranslationAction($translationId) {
+    $em = $this->container->get('doctrine.orm.entity_manager');
+    $translation = $em->find('LexikMailerBundle:EmailTranslation', $translationId);
 
-        return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_edit', array('emailId' => $translation->getEmail()->getId())));
+    if (!$translation) {
+      throw new NotFoundHttpException('Translation not found');
     }
+
+    $em->remove($translation);
+    $em->flush();
+
+    return new RedirectResponse($this->container->get('router')->generate('lexik_mailer.email_edit', array('emailId' => $translation->getEmail()->getId())));
+  }
+
 }
