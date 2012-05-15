@@ -104,6 +104,41 @@ class MessageFactory {
   }
 
   /**
+   * Find an email template and generate a preview.
+   *
+   * @param string $reference
+   * @param mixed $to
+   * @param array $parameters
+   * @param string $locale
+   * @return String
+   */
+  public function getPreview($reference, $to, array $parameters = array(), $locale = null) {
+    $email = $this->emailRepository->findOneByReference($reference);
+
+    if ($email instanceof EmailInterface) {
+      if (null == $locale) {
+        $locale = $this->options['default_locale'];
+      }
+
+      try {
+        $this->verifyLayoutArguments($email->getLayout()->getArguments(), $parameters);
+        $email->setLocale($locale);
+        $this->renderer->loadTemplates($email);
+      } catch (NoTranslationException $e) {
+        // TODO handle exception
+      } catch (\Twig_Error $e) {
+        // TODO handle exception
+      }
+
+      return $this->renderTemplate('render_content', $parameters, $email->getReference());
+    } elseif (null === $email) {
+      return $this->generateExceptionMessage($reference);
+    } else {
+      throw new \RuntimeException();
+    }
+  }
+
+  /**
    * Create a swift message
    *
    * @param EmailInterface $email
