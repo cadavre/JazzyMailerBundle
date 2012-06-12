@@ -194,7 +194,7 @@ class MessageFactory {
 
   /**
    * Verifies parameters given in parameters of message.
-   * 
+   *
    * @author Seweryn Zeman <seweryn.zeman@jazzy.pro>
    */
   private function verifyLayoutArguments($arguments, $parameters) {
@@ -202,6 +202,8 @@ class MessageFactory {
     $args = preg_split('/[\s,\$]+/', $arguments, -1, PREG_SPLIT_NO_EMPTY);
     $params = array_keys($parameters);
     $paramsCount = count($params);
+
+    $validTypes = array('string', 'int', 'float', 'double', 'array');
 
     if ((count($args) % 2 != 0) || (count($args) / 2 != $paramsCount)) {
       throw new \InvalidArgumentException("Number of arguments (" . count($args) / 2 . ") does not match the number of given parameters (" . $paramsCount . ")!");
@@ -213,7 +215,9 @@ class MessageFactory {
         throw new \InvalidArgumentException("Parameter name '" . $params[$i] . "' does not match any desired argument!");
       } else {
         if (!is_a($parameters[$params[$i]], $args[$index - 1])) {
-          throw new \InvalidArgumentException("Invalid parameter '" . $params[$i] . "' type! Should be '" . $args[$index - 1] . "'!");
+          if (!in_array(strtolower($args[$index - 1]), $validTypes)) {
+            throw new \InvalidArgumentException("Invalid parameter '" . $params[$i] . "' type! Should be '" . $args[$index - 1] . "'!");
+          }
         }
       }
     }
